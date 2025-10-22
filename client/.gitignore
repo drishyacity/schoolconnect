@@ -1,0 +1,11 @@
+node_modules/
+build/
+dist/
+.env
+*.log
+.cache/
+.next/
+out/
+coverage/
+.DS_Store
+netlify/functions/node_modules/
