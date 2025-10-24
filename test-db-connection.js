@@ -1,5 +1,4 @@
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import { neon } from '@neondatabase/serverless';
+import { Pool } from 'pg';
 import * as dotenv from 'dotenv';
 
 // Load environment variables
@@ -16,14 +15,18 @@ async function testConnection() {
 
         console.log('Attempting to connect to database...');
         
-        // Create a connection
-        const sql = neon(databaseUrl);
-        const db = drizzle(sql);
-
-        // Test the connection with a simple query
-        const result = await sql`SELECT NOW()`;
+        // Create a pg pool connection
+        const pool = new Pool({
+            connectionString: databaseUrl,
+            // Allow self-signed certificates (use a proper CA bundle in production)
+            ssl: { rejectUnauthorized: false }
+        });
+        const client = await pool.connect();
+        const result = await client.query('SELECT NOW()');
         console.log('✅ Database connection successful!');
-        console.log('Current database time:', result[0].now);
+        console.log('Current database time:', result.rows[0].now);
+        client.release();
+        await pool.end();
         
     } catch (error) {
         console.error('❌ Database connection failed:');

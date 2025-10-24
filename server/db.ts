@@ -1,21 +1,17 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "../shared/schema";
 import * as dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config();
 
-// Configure Neon WebSocket
-neonConfig.webSocketConstructor = ws;
-neonConfig.useSecureWebSocket = true;
-neonConfig.pipelineTLS = true;
-neonConfig.fetchEndpoint = "https://console.neon.tech/api/v2/projects/lvsqjsytajbxvrkvjqnk/branches/main/endpoints";
-neonConfig.fetchConnectionCache = true;
-
 // Get database URL from environment variable
-const DATABASE_URL = process.env.DATABASE_URL || 'postgres://postgres.lvsqjsytajbxvrkvjqnk:viraj1316mp@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require';
+const DATABASE_URL = process.env.DATABASE_URL;
+
+if (!DATABASE_URL) {
+  throw new Error("DATABASE_URL is not set. Please configure it in schoolconnect/.env");
+}
 
 console.log("Initializing database connection...");
 console.log("Using database URL:", DATABASE_URL);
@@ -27,16 +23,14 @@ export const pool = new Pool({
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 20000,
   maxUses: 7500,
-  ssl: {
-    rejectUnauthorized: true, // Enforce SSL certificate validation
-    sslmode: 'require'
-  },
+  // Allow self-signed certificates (consider proper CA in production)
+  ssl: { rejectUnauthorized: false },
   keepAlive: true,
   application_name: 'SchoolHubConnect'
 });
 
 // Handle pool errors
-pool.on('error', (err) => {
+pool.on('error', (err: any) => {
   console.error('Database pool error:', err);
   console.error('Error details:', {
     message: err.message,
@@ -48,7 +42,7 @@ pool.on('error', (err) => {
 // Handle connection errors
 pool.on('connect', (client) => {
   console.log('New client connected to database');
-  client.on('error', (err) => {
+  client.on('error', (err: any) => {
     console.error('Database client error:', err);
     console.error('Error details:', {
       message: err.message,
@@ -78,7 +72,7 @@ export async function checkConnection() {
     });
 
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Database connection test failed:", error);
     console.error("Error details:", {
       message: error.message,

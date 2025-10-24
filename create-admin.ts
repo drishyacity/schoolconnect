@@ -22,7 +22,7 @@ async function hashPassword(password: string) {
 
 async function createAdminUser() {
   try {
-    const password = 'viraj1316mp';
+    const password = 'admin123';
     const hashedPassword = await hashPassword(password);
     
     const adminUser = {

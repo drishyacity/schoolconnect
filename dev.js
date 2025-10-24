@@ -1,13 +1,17 @@
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import * as dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Load environment variables from .env if present
+dotenv.config();
+
 // Set environment variables
 process.env.NODE_ENV = 'development';
-process.env.DATABASE_URL = 'postgres://postgres.lvsqjsytajbxvrkvjqnk:viraj1316mp@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true';
+// Do not override DATABASE_URL; expect it from the environment/.env
 
 // Start the server
 const server = spawn('npx', ['tsx', 'server/index.ts'], {
