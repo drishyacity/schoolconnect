@@ -59,6 +59,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import Cropper from 'react-easy-crop';
+// Slider not needed until UI is wired like admin
+import ProfileImageCropper from "@/components/profile/ProfileImageCropper";
 
 // Define types for teacher qualifications and subjects
 type Qualification = {
@@ -146,14 +149,14 @@ export default function AdminTeacherProfile() {
   const [isAddingSubject, setIsAddingSubject] = useState(false);
   const [isEditingExperience, setIsEditingExperience] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  
+
   // Function to prevent keyboard from opening when showing the edit dialog
   const openEditProfileDialog = (shouldOpen: boolean) => {
     // Create an invisible dummy input to blur focus and prevent keyboard
     if (shouldOpen) {
       // First set the state to show dialog
       setIsEditingProfile(true);
-      
+
       // Then use multiple setTimeout calls to ensure inputs don't get auto-focused
       // This is needed because on mobile, the keyboard shows up after a dialog appears
       const preventAutoFocus = () => {
@@ -166,22 +169,22 @@ export default function AdminTeacherProfile() {
         dummyButton.style.width = '0';
         document.body.appendChild(dummyButton);
         dummyButton.focus();
-        
+
         // Blur any focused element
         if (document.activeElement instanceof HTMLElement) {
           document.activeElement.blur();
         }
-        
+
         // Force all inputs to blur
         document.querySelectorAll('input, textarea').forEach((el) => {
           if (el instanceof HTMLElement) {
             el.blur();
           }
         });
-        
+
         document.body.removeChild(dummyButton);
       };
-      
+
       // Run multiple times to catch any auto-focus at different timing points
       setTimeout(preventAutoFocus, 10);
       setTimeout(preventAutoFocus, 50);
@@ -193,9 +196,14 @@ export default function AdminTeacherProfile() {
       setIsEditingProfile(false);
     }
   };
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [imageScale, setImageScale] = useState(1);
-  const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
+
+  // Image cropper states (same system as admin)
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [isUploadingDocument, setIsUploadingDocument] = useState(false);
   const [isUploadingCertificate, setIsUploadingCertificate] = useState(false);
 
@@ -230,7 +238,7 @@ export default function AdminTeacherProfile() {
       subjectId: 0,
     },
   });
-  
+
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -362,7 +370,7 @@ export default function AdminTeacherProfile() {
       });
     },
   });
-  
+
   // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormValues) => {
@@ -372,14 +380,14 @@ export default function AdminTeacherProfile() {
     },
     onSuccess: () => {
       // Reset image state to avoid keeping transformations
-      setImageScale(1);
-      setImagePosition({ x: 0, y: 0 });
-      setUploadedImage(null);
-      
+      setZoom(1);
+      setCrop({ x: 0, y: 0 });
+      setPreviewImage(null);
+
       // Refresh data and close dialog
       refetch();
       setIsEditingProfile(false);
-      
+
       toast({
         title: "Profile updated",
         description: "The teacher's profile has been updated successfully.",
@@ -406,106 +414,15 @@ export default function AdminTeacherProfile() {
   const handleSubjectSubmit = (data: SubjectFormValues) => {
     addSubjectMutation.mutate(data);
   };
-  
-  // Function to apply transformations to the image before saving - Instagram style
-  const applyImageTransformations = async (imageUrl: string | null): Promise<string | null> => {
-    if (!imageUrl) return null;
-    
-    try {
-      // Create a temporary image to load the base64 data
-      const img = new Image();
-      
-      // Create a promise to wait for image loading
-      const imgLoaded = new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error("Failed to load image"));
-        img.src = imageUrl;
-      });
-      
-      // Wait for the image to load
-      await imgLoaded;
-      
-      // Instagram-style: Create a square crop first, then add circle mask
-      const outputSize = 500; // Large enough for quality
-      
-      // Create square canvas for our crop - Instagram style
-      const canvas = document.createElement('canvas');
-      canvas.width = outputSize;
-      canvas.height = outputSize;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return imageUrl;
-      
-      // Create circular mask - Instagram style
-      ctx.beginPath();
-      const radius = outputSize / 2;
-      ctx.arc(radius, radius, radius, 0, Math.PI * 2, true);
-      ctx.closePath();
-      ctx.clip();
-      
-      // Fill with white background
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, outputSize, outputSize);
-      
-      // Important: When taking a screenshot of the preview, we need to 
-      // factor in both the zoom level and the position
-      const centerX = outputSize / 2;
-      const centerY = outputSize / 2;
-      
-      // Instagram zoom calculation - start with a base scale that ensures
-      // the image fills the circle completely
-      const minScale = Math.max(
-        outputSize / img.width,
-        outputSize / img.height
-      );
-      
-      // Apply additional zoom factor from user settings
-      const finalScale = minScale * imageScale;
-      
-      // Calculate the translation considering the scale
-      const translationX = imagePosition.x / imageScale;
-      const translationY = imagePosition.y / imageScale;
-      
-      // Apply all transformations
-      ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.scale(finalScale, finalScale);
-      ctx.translate(translationX, translationY);
-      
-      // Draw the image centered
-      ctx.drawImage(
-        img,
-        -img.width / 2,
-        -img.height / 2,
-        img.width,
-        img.height
-      );
-      ctx.restore();
-      
-      // Convert to high-quality JPEG
-      const transformedImageUrl = canvas.toDataURL('image/jpeg', 0.95);
-      return transformedImageUrl;
-    } catch (error) {
-      console.error("Error applying image transformations:", error);
-      return imageUrl;
-    }
-  };
+
+  const onCropComplete = (_: any, pixels: any) => setCroppedAreaPixels(pixels);
 
   const handleProfileSubmit = async (data: ProfileFormValues) => {
-    try {
-      // Always apply circular crop if there's an image
-      if (data.profileImage) {
-        const transformedImage = await applyImageTransformations(data.profileImage);
-        // Update the data with the transformed image
-        data.profileImage = transformedImage;
-      }
-      
-      // Submit the form with transformed image
-      updateProfileMutation.mutate(data);
-    } catch (error) {
-      console.error("Error processing image before submit:", error);
-      // Fall back to submitting the form with the original image
-      updateProfileMutation.mutate(data);
+    // If there is a cropped preview, use it
+    if (previewImage) {
+      data.profileImage = previewImage;
     }
+    updateProfileMutation.mutate(data);
   };
 
   const handleDeleteQualification = (id: number) => {
@@ -531,7 +448,7 @@ export default function AdminTeacherProfile() {
   const getExperienceLevelLabel = (level: string) => {
     return experienceLevels.find(e => e.value === level)?.label || level;
   };
-  
+
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -544,14 +461,16 @@ export default function AdminTeacherProfile() {
         });
         return;
       }
-      
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
-        setUploadedImage(result);
-        // Update the form value with the base64 image
-        profileForm.setValue("profileImage", result);
+        setImageSrc(result);
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
+        setShowCropper(true);
       };
+
       reader.onerror = () => {
         toast({
           title: "Upload failed",
@@ -563,47 +482,6 @@ export default function AdminTeacherProfile() {
     }
   };
   
-  const resetImageTransform = () => {
-    setImageScale(1);
-    setImagePosition({ x: 0, y: 0 });
-  };
-  
-  // Simplified direct movement approach
-  const handleImageDrag = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.buttons !== 1) return; // Only move when primary mouse button is pressed
-    
-    setImagePosition(prev => ({
-      x: prev.x + e.movementX,
-      y: prev.y + e.movementY
-    }));
-  };
-  
-  // Touch events support for mobile devices with keyboard prevention
-  const [touchStartPos, setTouchStartPos] = useState({ x: 0, y: 0 });
-  
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    // Prevent default actions (including focus and keyboard popup)
-    if (e.touches.length === 1) {
-      const touch = e.touches[0];
-      setTouchStartPos({ x: touch.clientX, y: touch.clientY });
-    }
-  };
-  
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    // Prevent default actions (including focus and keyboard popup)
-    if (e.touches.length === 1) {
-      const touch = e.touches[0];
-      const deltaX = touch.clientX - touchStartPos.x;
-      const deltaY = touch.clientY - touchStartPos.y;
-      
-      setImagePosition(prev => ({
-        x: prev.x + deltaX,
-        y: prev.y + deltaY
-      }));
-      
-      setTouchStartPos({ x: touch.clientX, y: touch.clientY });
-    }
-  };
   
   // Document upload handlers
   const handleDocumentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1575,108 +1453,20 @@ export default function AdminTeacherProfile() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Profile Picture</FormLabel>
-                      <div className="space-y-4">
-                        {/* Instagram-style profile picture editor */}
-                        <div className="h-64 flex items-center justify-center">
-                          {/* Image Preview Area */}
-                          {(uploadedImage || field.value) && (
-                            <div className="relative w-48 h-48 mx-auto overflow-hidden border-2 border-primary rounded-full">
-                              <div 
-                                className="w-full h-full flex items-center justify-center cursor-move"
-                                onMouseDown={(e) => {
-                                  e.preventDefault(); 
-                                  e.stopPropagation();
-                                }}
-                                onClick={(e) => {
-                                  // Prevent any focus/keyboard from showing
-                                  e.preventDefault();
-                                }}
-                                onMouseMove={handleImageDrag}
-                                onTouchStart={(e) => {
-                                  // Prevent touch from focusing and showing keyboard
-                                  e.preventDefault();
-                                  handleTouchStart(e);
-                                }}
-                                onTouchMove={(e) => {
-                                  // Prevent default touch behavior
-                                  e.preventDefault();
-                                  handleTouchMove(e);
-                                }}
-                              >
-                                <img 
-                                  src={uploadedImage || field.value || ""} 
-                                  alt="Profile Preview" 
-                                  className="min-w-full min-h-full object-cover"
-                                  style={{
-                                    transform: `scale(${imageScale}) translate(${imagePosition.x}px, ${imagePosition.y}px)`,
-                                    transformOrigin: 'center',
-                                    /* Prevent selection and focus behavior */
-                                    WebkitUserSelect: 'none',
-                                    userSelect: 'none',
-                                    WebkitTouchCallout: 'none'
-                                  }}
-                                  draggable="false" 
-                                  onClick={(e) => e.preventDefault()}
-                                  onDragStart={(e) => e.preventDefault()}
-                                />
-                              </div>
-                              <div className="absolute inset-0 rounded-full pointer-events-none ring-2 ring-offset-2 ring-primary-foreground/10" />
-                            </div>
-                          )}
+                      <FormControl>
+                        <div>
+                          <ProfileImageCropper
+                            initialImage={field.value || teacherDetails.profileImage || null}
+                            nameForInitials={teacherDetails.name}
+                            onCropped={(img) => {
+                              profileForm.setValue("profileImage", img);
+                            }}
+                            avatarSizeClass="h-24 w-24"
+                            title="Crop Profile Image"
+                            description="Drag and zoom to adjust your profile picture"
+                          />
                         </div>
-                        
-                        {/* Controls for scale and position */}
-                        {(uploadedImage || field.value) && (
-                          <div className="space-y-2">
-                            <div className="flex items-center space-x-2">
-                              <Label className="w-20">Zoom:</Label>
-                              <input 
-                                type="range" 
-                                min="0.5" 
-                                max="2" 
-                                step="0.1" 
-                                value={imageScale} 
-                                onChange={(e) => setImageScale(parseFloat(e.target.value))} 
-                                className="flex-1" 
-                              />
-                            </div>
-                            <Button 
-                              type="button" 
-                              variant="outline" 
-                              size="sm" 
-                              className="w-full" 
-                              onClick={resetImageTransform}
-                            >
-                              Reset Image Position
-                            </Button>
-                          </div>
-                        )}
-                        
-                        {/* File upload */}
-                        <div className="flex items-center justify-center w-full">
-                          <label
-                            htmlFor="profileImageUpload"
-                            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-neutral-50 hover:bg-neutral-100"
-                          >
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                              <Upload className="w-8 h-8 mb-2 text-neutral-400" />
-                              <p className="mb-2 text-sm text-neutral-600">
-                                <span className="font-semibold">Click to upload</span> or drag and drop
-                              </p>
-                              <p className="text-xs text-neutral-500">
-                                PNG, JPG or JPEG (MAX. 800x800px)
-                              </p>
-                            </div>
-                            <input 
-                              id="profileImageUpload" 
-                              type="file" 
-                              className="hidden" 
-                              accept="image/*"
-                              onChange={handleImageUpload}
-                            />
-                          </label>
-                        </div>
-                      </div>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1716,22 +1506,7 @@ export default function AdminTeacherProfile() {
                             placeholder="35"
                             {...field}
                             value={field.value ?? ""}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                              const value = e.target.value ? parseInt(e.target.value) : null;
-                              field.onChange(value);
-                            }}
-                            autoFocus={false}
-                            readOnly={true}
-                            onClick={(e) => {
-                              // Only allow editing after user explicitly taps
-                              e.currentTarget.readOnly = false;
-                            }}
-                            onFocus={(e) => {
-                              // Clear readonly only after intentional focus
-                              if (document.activeElement === e.currentTarget) {
-                                e.currentTarget.readOnly = false;
-                              }
-                            }}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
                           />
                         </FormControl>
                         <FormMessage />

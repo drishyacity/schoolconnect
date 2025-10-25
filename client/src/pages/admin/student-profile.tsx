@@ -46,6 +46,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, Pencil, Trash2, GraduationCap, Book, Users, Plus, Save, Upload, Camera, X, Loader2, FileText, Eye, Download, ExternalLink, CalendarIcon } from "lucide-react";
+import ProfileImageCropper from "@/components/profile/ProfileImageCropper";
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -2392,174 +2394,17 @@ export default function AdminStudentProfile() {
           <Form {...profileForm}>
             <form onSubmit={profileForm.handleSubmit(handleProfileSubmit)} className="space-y-4">
               <div className="flex flex-col items-center space-y-4 mb-6">
-                {/* Instagram-style image editor with scaling and dragging */}
-                {uploadedImage ? (
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="relative">
-                      {/* Preview container with circular mask */}
-                      <div 
-                        className="h-64 w-64 rounded-full overflow-hidden border-2 border-neutral-200 cursor-move relative"
-                        onMouseDown={() => document.addEventListener('mousemove', handleImageDrag as any)}
-                        onMouseUp={() => document.removeEventListener('mousemove', handleImageDrag as any)}
-                        onMouseLeave={() => document.removeEventListener('mousemove', handleImageDrag as any)}
-                        onMouseMove={handleImageDrag}
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={() => {}}
-                      >
-                        {/* Image with transforms applied */}
-                        <div 
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            overflow: 'hidden',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transform: `scale(${imageScale}) translate(${imagePosition.x}px, ${imagePosition.y}px)`,
-                          }}
-                        >
-                          <img 
-                            src={uploadedImage} 
-                            alt="Preview" 
-                            style={{
-                              maxWidth: 'none',
-                              maxHeight: 'none',
-                              pointerEvents: 'none',
-                            }} 
-                          />
-                        </div>
-                        
-                        {/* Instruction overlay */}
-                        <div className="absolute bottom-2 left-0 right-0 text-center text-white text-xs bg-black bg-opacity-50 py-1">
-                          Drag to position • Use slider to zoom
-                        </div>
-                      </div>
-                    
-                      {/* Scale control slider */}
-                      <div className="mt-4 w-64">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="rounded-full p-0 w-8 h-8 flex items-center justify-center"
-                            onClick={() => setImageScale(Math.max(0.5, imageScale - 0.1))}
-                          >
-                            <span className="text-lg font-bold">-</span>
-                          </Button>
-                          
-                          {/* Custom slider */}
-                          <div className="relative w-full h-1 bg-neutral-200 rounded-full">
-                            <input
-                              type="range"
-                              min="0.5"
-                              max="3"
-                              step="0.01"
-                              value={imageScale}
-                              onChange={(e) => setImageScale(parseFloat(e.target.value))}
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                            />
-                            <div 
-                              className="absolute h-1 bg-primary rounded-full" 
-                              style={{ width: `${((imageScale - 0.5) / 2.5) * 100}%` }}
-                            ></div>
-                            <div 
-                              className="absolute h-3 w-3 bg-primary rounded-full -mt-1"
-                              style={{ left: `${((imageScale - 0.5) / 2.5) * 100}%` }}
-                            ></div>
-                          </div>
-                          
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="rounded-full p-0 w-8 h-8 flex items-center justify-center"
-                            onClick={() => setImageScale(Math.min(3, imageScale + 0.1))}
-                          >
-                            <span className="text-lg font-bold">+</span>
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          setUploadedImage(null);
-                          setPreviewImage(null);
-                          profileForm.setValue("profileImage", null);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={resetImageTransform}
-                      >
-                        Reset
-                      </Button>
-                      <Button 
-                        type="button" 
-                        variant="default" 
-                        size="sm"
-                        onClick={async () => {
-                          const transformedImage = await applyImageTransformations(uploadedImage);
-                          setPreviewImage(transformedImage);
-                          profileForm.setValue("profileImage", transformedImage);
-                          setUploadedImage(null);
-                        }}
-                      >
-                        Apply
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <Avatar className="h-24 w-24">
-                      {previewImage ? (
-                        <AvatarImage src={previewImage} alt={studentDetails.name} />
-                      ) : studentDetails.profileImage ? (
-                        <AvatarImage src={studentDetails.profileImage} alt={studentDetails.name} />
-                      ) : (
-                        <AvatarFallback className="text-xl bg-primary text-white">
-                          {getInitials(studentDetails.name)}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    
-                    <div className="flex gap-2">
-                      <label htmlFor="profile-image" className="cursor-pointer">
-                        <Button type="button" variant="outline" size="sm" className="flex items-center gap-1" onClick={() => document.getElementById('profile-image')?.click()}>
-                          <Upload size={14} />
-                          Upload Photo
-                        </Button>
-                        <Input 
-                          type="file" 
-                          id="profile-image" 
-                          accept="image/*" 
-                          className="hidden" 
-                          onChange={handleImageUpload} 
-                        />
-                      </label>
-                      
-                      {(previewImage || studentDetails.profileImage) && (
-                        <Button type="button" variant="outline" size="sm" className="flex items-center gap-1" onClick={() => {
-                          setPreviewImage(null);
-                          profileForm.setValue("profileImage", null);
-                        }}>
-                          <X size={14} />
-                          Remove
-                        </Button>
-                      )}
-                    </div>
-                  </>
-                )}
+                <ProfileImageCropper
+                  initialImage={previewImage || studentDetails.profileImage || null}
+                  nameForInitials={studentDetails.name}
+                  onCropped={(img) => {
+                    setPreviewImage(img);
+                    profileForm.setValue("profileImage", img);
+                  }}
+                  avatarSizeClass="h-24 w-24"
+                  title="Crop Profile Image"
+                  description="Drag and zoom to adjust the student's profile picture"
+                />
               </div>
               
               <FormField

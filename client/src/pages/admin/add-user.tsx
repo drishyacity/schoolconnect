@@ -55,6 +55,25 @@ export default function AddUserPage() {
       section: null,
       experienceLevel: null,
       bio: null,
+      // Student additional fields
+      age: null as any,
+      rollNumber: null as any,
+      fatherName: null as any,
+      motherName: null as any,
+      guardianName: null as any,
+      mobileNumber: null as any,
+      parentsMobile: null as any,
+      guardianMobile: null as any,
+      address: null as any,
+      aadharNo: null as any,
+      parentsEmail: null as any,
+      admissionNo: null as any,
+      admissionDate: null as any,
+      busStop: null as any,
+      category: null as any,
+      religion: null as any,
+      // Teacher additional fields
+      teacherId: null as any,
     },
   });
   
@@ -256,111 +275,335 @@ export default function AddUserPage() {
                 </CardContent>
               </Card>
               
-              {/* Student-specific fields */}
-              {showStudentFields && (
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="bg-amber-100 p-2 rounded-full">
-                        <Info size={20} className="text-amber-600" />
-                      </div>
-                      <div>
-                        <CardTitle>Student Information</CardTitle>
-                        <CardDescription>
-                          Enter additional details specific to students
-                        </CardDescription>
-                      </div>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="bg-amber-100 p-2 rounded-full">
+                      <Info size={20} className="text-amber-600" />
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="grade"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Grade</FormLabel>
-                            <Select 
-                              onValueChange={(value) => {
-                                // Parse string value to number immediately
-                                field.onChange(value ? Number(value) : null);
-                              }}
-                              value={field.value?.toString() || ""}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select grade" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="1">Grade 1</SelectItem>
-                                <SelectItem value="2">Grade 2</SelectItem>
-                                <SelectItem value="3">Grade 3</SelectItem>
-                                <SelectItem value="4">Grade 4</SelectItem>
-                                <SelectItem value="5">Grade 5</SelectItem>
-                                <SelectItem value="6">Grade 6</SelectItem>
-                                <SelectItem value="7">Grade 7</SelectItem>
-                                <SelectItem value="8">Grade 8</SelectItem>
-                                <SelectItem value="9">Grade 9</SelectItem>
-                                <SelectItem value="10">Grade 10</SelectItem>
-                                <SelectItem value="11">Grade 11</SelectItem>
-                                <SelectItem value="12">Grade 12</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="section"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Section</FormLabel>
-                            <Select 
-                              onValueChange={field.onChange} 
-                              value={field.value || ""}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select section" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="A">Section A</SelectItem>
-                                <SelectItem value="B">Section B</SelectItem>
-                                <SelectItem value="C">Section C</SelectItem>
-                                <SelectItem value="D">Section D</SelectItem>
-                                <SelectItem value="E">Section E</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                    <div>
+                      <CardTitle>Additional Information</CardTitle>
+                      <CardDescription>
+                        Enter additional details
+                      </CardDescription>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
-              
-              {/* Teacher-specific fields */}
-              {showTeacherFields && (
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="bg-amber-100 p-2 rounded-full">
-                        <Info size={20} className="text-amber-600" />
-                      </div>
-                      <div>
-                        <CardTitle>Teacher Information</CardTitle>
-                        <CardDescription>
-                          Enter additional details for the teacher profile
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="admissionNo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Admission No.</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. ADM2024-001" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="admissionDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Admission Date</FormLabel>
+                          <Input
+                            type="date"
+                            value={field.value ? new Date(field.value).toISOString().substring(0,10) : ""}
+                            onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value).toISOString() : null)}
+                          />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="grade"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Grade</FormLabel>
+                          <Select 
+                            onValueChange={(value) => {
+                              // Parse string value to number immediately
+                              field.onChange(value ? Number(value) : null);
+                            }}
+                            value={field.value?.toString() || ""}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select grade" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="1">Grade 1</SelectItem>
+                              <SelectItem value="2">Grade 2</SelectItem>
+                              <SelectItem value="3">Grade 3</SelectItem>
+                              <SelectItem value="4">Grade 4</SelectItem>
+                              <SelectItem value="5">Grade 5</SelectItem>
+                              <SelectItem value="6">Grade 6</SelectItem>
+                              <SelectItem value="7">Grade 7</SelectItem>
+                              <SelectItem value="8">Grade 8</SelectItem>
+                              <SelectItem value="9">Grade 9</SelectItem>
+                              <SelectItem value="10">Grade 10</SelectItem>
+                              <SelectItem value="11">Grade 11</SelectItem>
+                              <SelectItem value="12">Grade 12</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="section"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Section</FormLabel>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            value={field.value || ""}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select section" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="A">Section A</SelectItem>
+                              <SelectItem value="B">Section B</SelectItem>
+                              <SelectItem value="C">Section C</SelectItem>
+                              <SelectItem value="D">Section D</SelectItem>
+                              <SelectItem value="E">Section E</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="age"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Age</FormLabel>
+                          <FormControl>
+                            <Input type="number" placeholder="e.g. 14" value={field.value ?? ""} onChange={(e)=>field.onChange(e.target.value === '' ? null : Number(e.target.value))} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="rollNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Roll Number</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. 23" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="fatherName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Father's Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Father's name" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="motherName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Mother's Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Mother's name" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="guardianName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Guardian Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Guardian's name" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="mobileNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Student Mobile</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. 9876543210" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="parentsMobile"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Parents Mobile</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. 9876543210" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="guardianMobile"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Guardian Mobile</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. 9876543210" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="parentsEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Parents Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="parent@example.com" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="aadharNo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Aadhar No.</FormLabel>
+                          <FormControl>
+                            <Input placeholder="XXXX-XXXX-XXXX" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="busStop"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bus Stop</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Nearest bus stop" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Category</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="general">General</SelectItem>
+                              <SelectItem value="obc">OBC</SelectItem>
+                              <SelectItem value="sc">SC</SelectItem>
+                              <SelectItem value="st">ST</SelectItem>
+                              <SelectItem value="ews">EWS</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="religion"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Religion</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select religion" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="hindu">Hindu</SelectItem>
+                              <SelectItem value="muslim">Muslim</SelectItem>
+                              <SelectItem value="christian">Christian</SelectItem>
+                              <SelectItem value="sikh">Sikh</SelectItem>
+                              <SelectItem value="buddhist">Buddhist</SelectItem>
+                              <SelectItem value="jain">Jain</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Address</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Residential address" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="teacherId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Teacher ID</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. TCH-102" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <FormField
                       control={form.control}
                       name="experienceLevel"
@@ -389,7 +632,6 @@ export default function AddUserPage() {
                         </FormItem>
                       )}
                     />
-                    
                     <FormField
                       control={form.control}
                       name="bio"
@@ -411,9 +653,9 @@ export default function AddUserPage() {
                         </FormItem>
                       )}
                     />
-                  </CardContent>
-                </Card>
-              )}
+                  </div>
+                </CardContent>
+              </Card>
               
               <CardFooter className="px-0 pt-3 pb-0 flex flex-col sm:flex-row gap-3 sm:justify-between">
                 <Button
