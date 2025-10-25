@@ -31,20 +31,25 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  const cookieSecure = process.env.SESSION_COOKIE_SECURE
+    ? process.env.SESSION_COOKIE_SECURE === "true"
+    : Boolean(process.env.RENDER);
+  const sameSite = (process.env.SESSION_SAMESITE as any) || 'lax';
+
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "lms-session-secret-key",
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
     cookie: {
-      secure: process.env.NODE_ENV === "production" ? true : false,
+      secure: cookieSecure,
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
       httpOnly: true,
-      sameSite: 'lax'
+      sameSite
     },
   };
 
-  app.set("trust proxy", 1);
+  if (process.env.RENDER) app.set("trust proxy", 1);
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());

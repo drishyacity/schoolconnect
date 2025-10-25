@@ -21,6 +21,8 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || '';
+
 export async function apiRequest(
   method: string,
   url: string,
@@ -36,12 +38,8 @@ export async function apiRequest(
     headers['Content-Type'] = 'application/json';
   }
 
-  // Ensure we're using the correct port (5000) for API requests
-  let fullUrl = url;
-  if (url.startsWith('/api')) {
-    fullUrl = `http://localhost:5000${url}`;
-    console.log(`Using full URL for API request: ${fullUrl}`);
-  }
+  // Compose API URL: prefer VITE_API_BASE_URL if provided, else relative (same-origin)
+  const fullUrl = url.startsWith('/api') ? `${API_BASE}${url}` : url;
 
   const response = await fetch(fullUrl, {
     method,
@@ -86,9 +84,9 @@ export const getQueryFn: <T>(options: {
     try {
       let url = queryKey[0] as string;
 
-      // Ensure we're using the correct port (5000) for API requests
+      // Compose API URL: prefer VITE_API_BASE_URL if provided, else relative (same-origin)
       if (url.startsWith('/api')) {
-        url = `http://localhost:5000${url}`;
+        url = `${API_BASE}${url}`;
       }
 
       console.log(`Fetch request to: ${url}`);
