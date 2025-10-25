@@ -9,6 +9,7 @@
     "dev": "node dev.js",
     "build": "vite build",
     "start": "NODE_ENV=production node dist/server/index.js",
+    "start:server": "cross-env NODE_ENV=production tsx server/index.ts",
     "check-types": "tsc --noEmit",
     "check": "tsc",
     "db:push": "drizzle-kit push"

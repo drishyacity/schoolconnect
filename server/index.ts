@@ -109,9 +109,9 @@ async function resetQuizAttemptsForStu01() {
     console.log('Quiz reset failed, continuing server startup:', error);
   }
 
-  // Use localhost instead of 0.0.0.0 for Windows compatibility
-  const port = 5000;
-  server.listen(port, 'localhost', () => {
-    log(`Server running at http://localhost:${port}`);
+  // Listen on provided PORT (Render/Cloud) or default 5000
+  const port = parseInt(process.env.PORT || '5000', 10);
+  server.listen(port, '0.0.0.0', () => {
+    log(`Server running on port ${port}`);
   });
 })();
